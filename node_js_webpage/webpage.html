@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Heali OCR</title>
+<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, width=device-width" />
+<style type="text/css">
+body {
+       margin: 10px;
+       padding: 10px;
+     }
+</style>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+<canvas id="myCanvas" width="4000" height="4000"> // Creating a canvas
+</canvas>
+
+<script>
+
+Promise.all([ // Using promise to fetch two apis at a time                         // You can change the image by changing menuID
+            fetch("https://rhumn4n489.execute-api.us-east-2.amazonaws.com/dev/menu/healthy_food_menu").then(value => value.json()), // calling api to get menu images
+            fetch("https://rhumn4n489.execute-api.us-east-2.amazonaws.com/dev/jsons/healthy_food_menu").then(value => value.json()) // calling api to get box coordinates
+            ])
+            .then((value) => {
+               // console.log(value[0]);
+               // console.log(value[1]);
+
+              //json response
+
+               var image_object = value[0]; // saves object conatining images from 1st API
+               var coordinate_object = value[1]; // saves object containing box coordinates from 2nd API
+               console.log(image_object);
+               console.log(coordinate_object);
+               var url = JSON.stringify(image_object.path);
+               console.log(coordinate_object.jsons);
+               var coordinates = JSON.parse(coordinate_object.jsons); // parse coordinate object to json format
+
+               console.log(coordinates[1]);
+
+               console.log(coordinates.length);
+               console.log(coordinates[1][0]);
+
+
+               var img = document.createElement("img"); // creates an img tag in HTML
+               img.setAttribute("id", image_object.menuID); // sets the menuID as image id in HTML
+               img.setAttribute("src", image_object.path); // sets the image path as src in HTML
+               console.log(img); // output to visualize the img tag
+
+               var c=document.getElementById("myCanvas"); // calls canvas with id="myCanvas"
+               var ctx=c.getContext("2d");
+
+               var canvas = document.getElementById('myCanvas');
+               var context = canvas.getContext('2d');
+
+               img.onload = function() {
+                 ctx.drawImage(img,0,0);
+                 context.beginPath();
+                 for (i = 0; i < coordinates.length; i++) { // for loop to generate bounding boxes using coordinates from the parsed coordinate_object
+                     var cordeach = coordinates[i];
+                     for (j = 0; j < cordeach.length; j++) {
+                       context.rect(coordinates[i][0],coordinates[i][1],coordinates[i][2],coordinates[i][3]);
+                     }
+                 }
+
+                 context.lineWidth = 2;
+                 context.strokeStyle = 'green';
+                 context.stroke();
+               };
+
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+</script>
+
+</head>
+</html>

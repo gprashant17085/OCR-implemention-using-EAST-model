@@ -1,0 +1,83 @@
+# service: my-express-application
+#
+# provider:
+#   name: aws
+#   runtime: nodejs12.x
+#   stage: dev
+#   region: us-east-2
+#
+# functions:
+#   app:
+#     handler: index.handler
+#     events:
+#       - http: ANY /
+#       - http: 'ANY {proxy+}'
+
+service: my-express-application
+
+
+custom:
+  tableName: 'Table-1-${self:provider.stage}'
+  table2Name: 'Table-2-${self:provider.stage}'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: dev
+  region: us-east-2
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - { "Fn::GetAtt": ["UsersDynamoDBTable", "Arn" ] }
+        - { "Fn::GetAtt": ["UsersDynamoDBTable2", "Arn" ] }
+  environment:
+    Table_1: ${self:custom.tableName}
+    Table_2: ${self:custom.table2Name}
+
+functions:
+  app:
+    handler: index.handler
+    events:
+      - http: ANY /
+      - http: 'ANY {proxy+}'
+
+
+resources:
+  Resources:
+    UsersDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: menuID
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: menuID
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        TableName: ${self:custom.tableName}
+    UsersDynamoDBTable2:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: menuID
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: menuID
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        TableName: ${self:custom.table2Name}
